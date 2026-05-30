@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hayykal Azzam | Developer Terminal</title>
+    <!-- Mengimpor font Fira Code dari Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* === VARIABEL WARNA & TEMA === */
+        :root {
+            --bg-dark: #000000;
+            --bg-panel: #111111;
+            --text-green: #00FF41;
+            --text-cyan: #00E5FF;
+            --glow-green: 0 0 8px rgba(0, 255, 65, 0.6);
+            --glow-cyan: 0 0 8px rgba(0, 229, 255, 0.6);
+            --font-main: 'Fira Code', monospace;
+        }
+
+        /* === RESET & PENGATURAN DASAR === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-green);
+            font-family: var(--font-main);
+            font-size: 15px;
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            /* Efek scanline halus ala monitor CRT */
+            background-image: linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+            background-size: 1px 2px, 2px 1px;
+        }
+
+        /* === KONTANER TERMINAL === */
+        .terminal-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--text-green);
+            box-shadow: var(--glow-green);
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === HEADER TERMINAL === */
+        .terminal-header {
+            background-color: #222;
+            padding: 5px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--text-green);
+            font-size: 13px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            margin-right: 15px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .dot-red { background-color: #ff5f56; }
+        .dot-yellow { background-color: #ffbd2e; }
+        .dot-green { background-color: #27c93f; }
+
+        .terminal-title {
+            color: #ddd;
+            flex-grow: 1;
+            text-align: center;
+            margin-right: 50px;
+        }
+
+        /* === AREA KONTEN UTAMA === */
+        .terminal-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === NAVIGASI === */
+        nav {
+            margin-bottom: 30px;
+            border-bottom: 1px dashed var(--text-green);
+            padding-bottom: 15px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item::before {
+            content: "[";
+            color: var(--text-cyan);
+        }
+        .nav-item::after {
+            content: "]";
+            color: var(--text-cyan);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: var(--text-cyan);
+            text-shadow: var(--glow-cyan);
+        }
+
+        /* === BAGIAN KONTEN === */
+        .section {
+            display: none; /* Disembunyikan secara default, diatur oleh JS */
+            flex-grow: 1;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Teks & Utilitas */
+        h1, h2, h3 {
+            color: var(--text-cyan);
+            text-shadow: var(--glow-cyan);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .cyan-text {
+            color: var(--text-cyan);
+            text-shadow: var(--glow-cyan);
+        }
+
+        .prompt::before {
+            content: "hayykal@GDG:~$ ";
+            color: var(--text-cyan);
+            text-shadow: var(--glow-cyan);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background-color: var(--text-green);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* === FORMAT TABEL SPESIFIKASI === */
+        .tech-specs {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .tech-specs td {
+            padding: 8px 0;
+            border-bottom: 1px dotted rgba(0, 255, 65, 0.3);
+        }
+
+        .tech-specs td:first-child {
+            width: 25%;
+            color: var(--text-cyan);
+            font-weight: bold;
+        }
+
+        .tech-specs td:nth-child(2) {
+            width: 5%;
+            text-align: center;
+        }
+
+        /* === FORMAT DIREKTORI PROYEK === */
+        .dir-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .dir-list li {
+            margin-bottom: 8px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .permissions { color: #888; }
+        .size { color: #aa55ff; }
+        .date { color: #ffff55; }
+        .filename { color: var(--text-cyan); text-shadow: var(--glow-cyan); }
+
+        /* === FOOTER / KUTIPAN === */
+        .terminal-footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--text-green);
+            text-align: center;
+            font-style: italic;
+            color: #888;
+            font-size: 13px;
+        }
+
+        .terminal-footer span {
+            color: var(--text-cyan);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="terminal-container">
+        <!-- Bagian atas jendela konsol -->
+        <div class="terminal-header">
+            <div class="window-controls">
+                <div class="dot dot-red"></div>
+                <div class="dot dot-yellow"></div>
+                <div class="dot dot-green"></div>
+            </div>
+            <div class="terminal-title">hayykal@dev-machine: ~</div>
+        </div>
+
+        <div class="terminal-body">
+            <!-- Menu Navigasi -->
+            <nav>
+                <div class="prompt" style="margin-bottom: 10px;">./start_navigation.sh</div>
+                <ul class="nav-list">
+                    <li class="nav-item active" onclick="showSection('home')">Beranda</li>
+                    <li class="nav-item" onclick="showSection('about')">Tentang_Saya</li>
+                    <li class="nav-item" onclick="showSection('specs')">Spesifikasi_Teknis</li>
+                    <li class="nav-item" onclick="showSection('projects')">Proyek_Karya</li>
+                    <li class="nav-item" onclick="showSection('events')">Riwayat_Acara</li>
+                    <li class="nav-item" onclick="showSection('contact')">Kontak</li>
+                </ul>
+            </nav>
+
+            <!-- KONTEN: Beranda -->
+            <div id="home" class="section active">
+                <div class="prompt">./init_profile.exe</div>
+                <br>
+                <div id="typewriter-text" style="white-space: pre-line; margin-bottom: 10px;"></div>
+                <span class="cursor" id="main-cursor"></span>
+            </div>
+
+            <!-- KONTEN: Tentang Saya -->
+            <div id="about" class="section">
+                <div class="prompt">cat about_me.txt</div>
+                <br>
+                <h2>>_ Profil Sistem</h2>
+                <p>
+                    Halo! Saya <span class="cyan-text">Muhammad Hayykal Azzam</span>, seorang Software Developer yang berbasis di <span class="cyan-text">Jakarta Timur</span>. 
+                    Saya memiliki gairah besar dalam merancang arsitektur perangkat lunak yang efisien dan menulis kode yang bersih.
+                </p>
+                <br>
+                <p>
+                    Sebagai peserta aktif di <span class="cyan-text">Google Developer Groups (GDG)</span>, saya selalu berusaha untuk terus memperbarui basis data pengetahuan saya dengan teknologi-teknologi terbaru, khususnya di ekosistem pengembangan web dan aplikasi.
+                </p>
+                <br>
+                <p class="prompt" style="margin-top: 20px;">_</p>
+            </div>
+
+            <!-- KONTEN: Spesifikasi Teknis -->
+            <div id="specs" class="section">
+                <div class="prompt">systeminfo | findstr "Data"</div>
+                <br>
+                <h2>>_ Spesifikasi Sistem Dev</h2>
+                <table class="tech-specs">
+                    <tr>
+                        <td>[NAMA_ENTITAS]</td>
+                        <td>:</td>
+                        <td>Muhammad Hayykal Azzam</td>
+                    </tr>
+                    <tr>
+                        <td>[LOKASI_SERVER]</td>
+                        <td>:</td>
+                        <td>Jakarta Timur, Indonesia</td>
+                    </tr>
+                    <tr>
+                        <td>[PROFESI_UTAMA]</td>
+                        <td>:</td>
+                        <td>Software Developer</td>
+                    </tr>
+                    <tr>
+                        <td>[AFILIASI]</td>
+                        <td>:</td>
+                        <td>Peserta Google Developer Groups</td>
+                    </tr>
+                    <tr>
+                        <td>[KEAHLIAN_INTI]</td>
+                        <td>:</td>
+                        <td>Pemrograman Java, Pengembangan Aplikasi, Web Development</td>
+                    </tr>
+                    <tr>
+                        <td>[STATUS_SISTEM]</td>
+                        <td>:</td>
+                        <td><span class="cyan-text">ONLINE & READY TO CODE</span></td>
+                    </tr>
+                </table>
+                <br>
+                <p class="prompt" style="margin-top: 20px;">_</p>
+            </div>
+
+            <!-- KONTEN: Proyek Karya -->
+            <div id="projects" class="section">
+                <div class="prompt">ls -la /var/www/projects/</div>
+                <br>
+                <h2>>_ Direktori Proyek</h2>
+                <p>Total 4 item ditemukan...</p>
+                <ul class="dir-list">
+                    <li>
+                        <span class="permissions">drwxr-xr-x</span> 
+                        <span class="size">4096</span> 
+                        <span class="date">Okt 10 09:45</span> 
+                        <span class="filename">Aplikasi_Manajemen_Keuangan_Java/</span>
+                    </li>
+                    <li>
+                        <span class="permissions">drwxr-xr-x</span> 
+                        <span class="size">4096</span> 
+                        <span class="date">Nov 15 14:20</span> 
+                        <span class="filename">Web_Portal_Komunitas_GDG/</span>
+                    </li>
+                    <li>
+                        <span class="permissions">drwxr-xr-x</span> 
+                        <span class="size">2048</span> 
+                        <span class="date">Des 02 11:10</span> 
+                        <span class="filename">API_Sistem_Reservasi/</span>
+                    </li>
+                    <li>
+                        <span class="permissions">-rw-r--r--</span> 
+                        <span class="size">1024</span> 
+                        <span class="date">Jan 05 08:30</span> 
+                        <span class="filename">README.md</span>
+                    </li>
+                </ul>
+                <br>
+                <p class="prompt" style="margin-top: 20px;">_</p>
+            </div>
+
+            <!-- KONTEN: Riwayat Acara -->
+            <div id="events" class="section">
+                <div class="prompt">tail -f /var/log/events.log</div>
+                <br>
+                <h2>>_ Log Riwayat Acara</h2>
+                <div style="font-family: monospace; background: rgba(0, 255, 65, 0.05); padding: 10px; border-left: 3px solid var(--text-cyan);">
+                    <p>[INFO] [2023-11-20 09:00:00] <span class="cyan-text">Booting Event Sequence...</span></p>
+                    <p>[SUKSES] Menghadiri acara <span class="cyan-text">JavaVibeCode</span>. Modul pembelajaran Java Lanjut berhasil dieksekusi.</p>
+                    <p>[INFO] [2023-12-05 10:30:00] Sinkronisasi jaringan dengan rekan-rekan pengembang.</p>
+                    <p>[SUKSES] Terdaftar aktif sebagai peserta di <span class="cyan-text">Google Developer Groups</span>.</p>
+                    <p>[INFO] Menunggu input acara berikutnya...</p>
+                </div>
+                <br>
+                <p class="prompt" style="margin-top: 20px;">_</p>
+            </div>
+
+            <!-- KONTEN: Kontak -->
+            <div id="contact" class="section">
+                <div class="prompt">mail -s "Hello" hayykal@dev.local</div>
+                <br>
+                <h2>>_ Jaringan Komunikasi</h2>
+                <p>Silakan buka koneksi (ping) melalui protokol di bawah ini:</p>
+                <br>
+                <ul style="list-style: none;">
+                    <li>>_ [EMAIL]    : <span class="cyan-text">contact@hayykal.dev</span></li>
+                    <li>>_ [GITHUB]   : <span class="cyan-text">github.com/hayykal-azzam</span></li>
+                    <li>>_ [LINKEDIN] : <span class="cyan-text">linkedin.com/in/hayykalazzam</span></li>
+                    <li>>_ [LOKASI]   : <span class="cyan-text">Jakarta Timur, Node-01</span></li>
+                </ul>
+                <br>
+                <p>Status: Menunggu paket data masuk...</p>
+                <p class="prompt" style="margin-top: 20px;">_</p>
+            </div>
+
+            <!-- Footer / Kutipan Motivasi -->
+            <div class="terminal-footer">
+                "Teknologi berubah cepat, tapi <span>semangat belajar</span> dan <span>berkarya</span> harus terus menyala"
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript untuk interaksi -->
+    <script>
+        // Logika Navigasi Tab
+        function showSection(sectionId) {
+            // Sembunyikan semua bagian
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(sec => sec.classList.remove('active'));
+
+            // Hapus status aktif dari semua menu navigasi
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+
+            // Tampilkan bagian yang diklik
+            document.getElementById(sectionId).classList.add('active');
+
+            // Tambahkan status aktif pada menu yang diklik
+            // Mencari elemen berdasarkan event yang memicu (jika ada) atau pencocokan teks
+            const targetNav = Array.from(navItems).find(nav => 
+                nav.getAttribute('onclick').includes(sectionId)
+            );
+            if (targetNav) targetNav.classList.add('active');
+        }
+
+        // Logika Efek Ketik (Typewriter)
+        const textToType = `>_ MENGINISIALISASI SISTEM... [OK]
+>_ MEMUAT KEAHLIAN JAVA... [OK]
+>_ MENGHUBUNGKAN KE SERVER GDG... [OK]
+
+Selamat datang.
+Saya Muhammad Hayykal Azzam, siap untuk mulai melakukan coding.`;
+        
+        const typeTarget = document.getElementById('typewriter-text');
+        let i = 0;
+        const speed = 40; // Kecepatan ketik (ms)
+
+        function typeWriter() {
+            if (i < textToType.length) {
+                // Menangani baris baru dengan benar untuk HTML
+                if (textToType.charAt(i) === '\n') {
+                    typeTarget.innerHTML += '<br>';
+                } else {
+                    typeTarget.innerHTML += textToType.charAt(i);
+                }
+                i++;
+                setTimeout(typeWriter, speed);
+            }
+        }
+
+        // Mulai efek ketik saat halaman selesai dimuat
+        window.onload = () => {
+            typeWriter();
+        };
+    </script>
+</body>
+</html>
